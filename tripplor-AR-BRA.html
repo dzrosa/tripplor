@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripplor — Landings diseñadas con IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0A0A0A;
+  --bg2: #111111;
+  --border: rgba(255,255,255,0.07);
+  --ink: #F0EDE8;
+  --muted: rgba(240,237,232,0.72);
+  --accent: #E8452C;
+  --accent2: #F0C93A;
+  --white: #F0EDE8;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CURSOR */
+.cursor {
+  position: fixed;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.08s, width 0.2s, height 0.2s, background 0.2s;
+  mix-blend-mode: normal;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(232,69,44,0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s ease-out, width 0.2s, height 0.2s;
+}
+body:hover .cursor { opacity: 1; }
+
+/* GRAIN OVERLAY */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 56px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  background: rgba(10,10,10,0.8);
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 3px;
+  color: var(--white);
+}
+.logo span { color: var(--accent); }
+.nav-links { display: flex; align-items: center; gap: 40px; }
+.nav-links a {
+  font-size: 14px; font-weight: 400;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+.nav-cta {
+  background: var(--accent) !important;
+  color: #fff !important;
+  padding: 9px 22px;
+  border-radius: 4px;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  transition: opacity 0.2s !important;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+#lang-switcher {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s, color 0.2s;
+  letter-spacing: 0.5px;
+}
+#lang-switcher:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 100px 56px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* BIG BG TEXT */
+.hero-bg-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(160px, 22vw, 300px);
+  letter-spacing: 8px;
+  color: rgba(255,255,255,0.025);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-top {
+  position: absolute;
+  top: 88px; right: 56px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: #25D366;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.hero-content { position: relative; z-index: 2; }
+.hero-label {
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.1s forwards;
+}
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 11vw, 152px);
+  line-height: 0.92;
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.2s forwards;
+}
+.hero h1 .italic {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  color: var(--accent);
+  letter-spacing: 0;
+  font-size: 0.88em;
+}
+.hero-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.4s forwards;
+}
+.hero-sub {
+  font-size: 17px;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 420px;
+  line-height: 1.7;
+}
+.hero-guarantee {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--accent);
+  font-weight: 500;
+  max-width: 420px;
+}
+.hero-actions {
+  display: flex; gap: 12px; align-items: center; flex-shrink: 0;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 30px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+  display: inline-block;
+}
+.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-ghost {
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 14px 30px;
+  border-radius: 4px;
+  font-size: 15px;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+  display: inline-block;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--white); }
+
+/* DIVIDER LINE */
+.line-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+}
+
+/* STATS */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  padding: 48px 56px;
+  border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.stat-num span { color: var(--accent); }
+.stat-label { font-size: 16px; color: var(--muted); font-weight: 300; }
+
+/* MARQUEE */
+.marquee-wrap {
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+}
+.marquee {
+  display: flex; gap: 48px; white-space: nowrap;
+  animation: scroll 22s linear infinite;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px; letter-spacing: 3px;
+  color: var(--muted);
+}
+.marquee span { flex-shrink: 0; }
+.marquee .dot { color: var(--accent); font-size: 10px; }
+
+/* HOW */
+.section { padding: 100px 56px; }
+.s-label {
+  font-size: 13px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 48px;
+  display: flex; align-items: center; gap: 12px;
+}
+.s-label::before {
+  content: '';
+  display: block; width: 32px; height: 1px;
+  background: var(--accent);
+}
+.s-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 0.95;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+.s-title .i {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.85em;
+  letter-spacing: 0;
+}
+.s-sub { font-size: 16px; color: var(--muted); font-weight: 300; max-width: 460px; line-height: 1.7; margin-bottom: 64px; }
+
+/* STEPS */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+}
+.step {
+  padding: 40px 32px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  transition: background 0.3s;
+}
+.step:last-child { border-right: none; }
+.step:hover { background: rgba(255,255,255,0.02); }
+.step-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1;
+  margin-bottom: 20px;
+  transition: color 0.3s;
+}
+.step:hover .step-num { color: var(--accent); opacity: 1; }
+.step h3 {
+  font-size: 17px; font-weight: 500;
+  margin-bottom: 12px; line-height: 1.3;
+}
+.step p { font-size: 16px; color: var(--muted); line-height: 1.65; }
+.step-tag {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 13px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--accent);
+}
+
+/* INCLUDES */
+.includes-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.includes-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.includes-list { display: flex; flex-direction: column; gap: 0; }
+.include-row {
+  display: flex; align-items: center; gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  transition: padding-left 0.2s;
+}
+.include-row:hover { padding-left: 8px; }
+.include-row:first-child { border-top: 1px solid var(--border); }
+.include-icon { color: var(--accent); font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+.include-row span { font-size: 16px; font-weight: 400; }
+.include-row .tag {
+  margin-left: auto;
+  font-size: 13px; color: var(--muted);
+  letter-spacing: 1px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* PRICE */
+.price-section {
+  padding: 100px 56px;
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+.price-section::after {
+  content: '$150.000';
+  position: absolute;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 280px;
+  right: -20px; top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.02);
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: -4px;
+}
+.price-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.price-left {}
+.price-amount {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 12vw, 140px);
+  line-height: 0.9;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin: 24px 0 12px;
+}
+.price-amount span { color: var(--accent); }
+.price-note { font-size: 14px; color: var(--muted); font-weight: 300; margin-bottom: 40px; }
+.price-right {
+  border: 1px solid var(--border);
+  padding: 40px;
+}
+.price-right-title {
+  font-size: 13px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 24px;
+}
+.price-items { display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+.price-item {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 16px;
+}
+.price-item::before {
+  content: '✓';
+  color: var(--accent);
+  font-weight: 700; flex-shrink: 0;
+}
+.guarantee {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  font-size: 16px; color: var(--muted);
+  line-height: 1.6;
+}
+.guarantee strong { color: var(--white); }
+
+/* FAQ */
+.faq-section { border-top: 1px solid var(--border); }
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 80px;
+  align-items: start;
+}
+.faq-list { display: flex; flex-direction: column; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  padding: 22px 0;
+  font-size: 16px; font-weight: 400;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  cursor: pointer; transition: color 0.2s;
+}
+.faq-q:hover { color: var(--accent); }
+.faq-toggle {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--muted);
+  transition: transform 0.3s, border-color 0.2s, color 0.2s;
+}
+.faq-item.open .faq-toggle {
+  transform: rotate(45deg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.faq-a {
+  font-size: 16px; color: var(--muted); line-height: 1.75;
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.3s;
+}
+.faq-item.open .faq-a { max-height: 200px; padding-bottom: 20px; }
+
+/* FINAL CTA */
+.final-section {
+  padding: 120px 56px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+}
+.final-section h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 7vw, 96px);
+  line-height: 0.92;
+  letter-spacing: 1px;
+  max-width: 640px;
+}
+.final-section h2 .i {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  color: var(--accent);
+  font-size: 0.88em;
+  letter-spacing: 0;
+}
+.final-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+.wa-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #25D366;
+  color: #fff;
+  padding: 16px 32px;
+  border-radius: 4px;
+  font-size: 15px; font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.wa-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.wa-btn svg { width: 18px; height: 18px; fill: #fff; }
+.final-note { font-size: 12px; color: var(--muted); text-align: right; }
+
+/* FOOTER */
+footer {
+  padding: 28px 56px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 14px; color: var(--muted);
+  flex-wrap: wrap; gap: 12px;
+  letter-spacing: 0.5px;
+}
+.footer-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 3px; color: var(--white);
+}
+.footer-logo span { color: var(--accent); }
+
+/* WA FLOAT */
+.wa-float {
+  position: fixed; bottom: 28px; right: 28px;
+  width: 54px; height: 54px;
+  background: #25D366;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 32px rgba(37,211,102,0.3);
+  z-index: 200;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+.wa-float:hover { transform: scale(1.08); }
+.wa-float svg { width: 26px; height: 26px; fill: #fff; }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 900px) {
+  nav { padding: 16px 20px; }
+  .nav-links { display: none; }
+  .hero {
+    padding: 0 24px 60px;
+    justify-content: flex-end;
+  }
+  .hero-top { display: none !important; }
+  .hero-content { padding-top: 80px; }
+  .hero-bottom { flex-direction: column; align-items: flex-start; }
+  .stats { grid-template-columns: 1fr; }
+  .stat { border-right: none; border-bottom: 1px solid var(--border); padding: 36px 24px; }
+  .section { padding: 72px 24px; }
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .step { border-bottom: 1px solid var(--border); }
+  .includes-split { grid-template-columns: 1fr; gap: 40px; }
+  .price-section { padding: 72px 24px; }
+  .price-split { grid-template-columns: 1fr; gap: 40px; }
+  .faq-section .section { padding: 72px 24px; }
+  .faq-grid { grid-template-columns: 1fr; gap: 40px; }
+  .final-section { flex-direction: column; align-items: flex-start; padding: 80px 24px; }
+  .final-actions { align-items: flex-start; }
+  .final-note { text-align: left; }
+  footer { padding: 24px; }
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: clamp(52px, 13vw, 80px); }
+  .steps-grid { grid-template-columns: 1fr; }
+  #lang-switcher { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">TRIPPL<span>OR</span></div>
+  <div class="nav-links">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#precio">Precio</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://wa.me/5491168569520?text=Hola!%20Quiero%20info%20sobre%20Tripplor%20%F0%9F%9A%80" target="_blank" class="nav-cta">Quiero mi web landing</a>
+    <button id="lang-switcher" data-current="es">🇧🇷 PT</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text">TRIPPLOR</div>
+  <div class="hero-top">
+    <div class="hero-badge">Entrega en 24 horas</div>
+  </div>
+  <div class="hero-content">
+    <p class="hero-label">Agencia de diseño web · IA · Argentina</p>
+    <h1>TU LANDING<br><span class="italic">lista</span><br>MAÑANA.</h1>
+    <div class="hero-bottom">
+      <p class="hero-sub">Diseñamos tu web landing profesional con inteligencia artificial. Rápido, impactante y listo para convertir visitas en clientes.</p>
+      <p class="hero-guarantee">Si no te gusta el resultado, no pagás. Así de simple.</p>
+      <div class="hero-actions">
+        <a href="https://wa.me/5491168569520?text=Hola!%20Quiero%20mi%20landing%20con%20Tripplor%20%F0%9F%9A%80" target="_blank" class="btn-primary">Empezar ahora →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">24<span>hs</span></div>
+    <div class="stat-label">Tiempo de entrega desde que aprobás el brief</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">$<span>150K</span></div>
+    <div class="stat-label">Precio fijo. Sin sorpresas, sin extras ocultos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">0<span>%</span></div>
+    <div class="stat-label">Adelanto. Pagás solo cuando te gusta el resultado</div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span>DISEÑO CON IA</span><span class="dot">◆</span>
+    <span>ENTREGA EN 24HS</span><span class="dot">◆</span>
+    <span>PRECIO FIJO</span><span class="dot">◆</span>
+    <span>100% RESPONSIVA</span><span class="dot">◆</span>
+    <span>PAGÁS AL APROBAR</span><span class="dot">◆</span>
+    <span>DISEÑO CON IA</span><span class="dot">◆</span>
+    <span>ENTREGA EN 24HS</span><span class="dot">◆</span>
+    <span>PRECIO FIJO</span><span class="dot">◆</span>
+    <span>100% RESPONSIVA</span><span class="dot">◆</span>
+    <span>PAGÁS AL APROBAR</span><span class="dot">◆</span>
+    <span>DISEÑO CON IA</span><span class="dot">◆</span>
+    <span>ENTREGA EN 24HS</span><span class="dot">◆</span>
+    <span>PRECIO FIJO</span><span class="dot">◆</span>
+  </div>
+</div>
+
+<!-- CÓMO FUNCIONA -->
+<section class="section" id="como-funciona">
+  <div class="s-label">El proceso</div>
+  <h2 class="s-title">CUATRO PASOS.<br><span class="i">una web landing.</span></h2>
+  <p class="s-sub">Sin reuniones interminables ni esperas de semanas. Así trabajamos en Tripplor:</p>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Completás el brief</h3>
+      <p>Un formulario de 10 minutos con lo esencial: qué vendés, a quién, y cómo te imaginás el diseño.</p>
+      <span class="step-tag">10 minutos</span>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Generamos el diseño</h3>
+      <p>Combinamos diseño profesional con IA para crear tu web landing. Copy incluido, sin que tengas que escribir nada.</p>
+      <span class="step-tag">Mismo día</span>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>La revisás</h3>
+      <p>Te mostramos el resultado. Si querés cambios, los hacemos. Tenés una ronda de revisión incluida.</p>
+      <span class="step-tag">Tus ajustes</span>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Aprobás y pagás</h3>
+      <p>Si te gusta, pagás. Si no, no. Simple. Publicamos la web landing y en 24hs ya está online.</p>
+      <span class="step-tag">Sin riesgo</span>
+    </div>
+  </div>
+</section>
+
+<!-- QUÉ INCLUYE -->
+<section class="section includes-section">
+  <div class="s-label">Qué incluye</div>
+  <div class="includes-split">
+    <div>
+      <h2 class="s-title">TODO LO<br><span class="i">necesario.</span></h2>
+      <p class="s-sub">Un solo precio. Nada de cobros extra por el copy, el diseño o la publicación.</p>
+      <a href="https://wa.me/5491168569520?text=Hola!%20Quiero%20mi%20landing%20con%20Tripplor%20%F0%9F%9A%80" target="_blank" class="btn-primary">Quiero la mía →</a>
+    </div>
+    <div class="includes-list">
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Copy completo redactado por IA</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Diseño 100% personalizado</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Responsiva — celular, tablet y desktop</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Botón de WhatsApp con tu número</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Una ronda de revisiones</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Publicación online lista para usar</span>
+        <span class="tag">incluido</span>
+      </div>
+      <div class="include-row">
+        <span class="include-icon">✦</span>
+        <span>Entrega en 24 horas</span>
+        <span class="tag">garantizado</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRECIO -->
+<section class="price-section" id="precio">
+  <div class="s-label">Inversión</div>
+  <div class="price-split">
+    <div class="price-left">
+      <p style="font-size:14px;color:var(--muted);letter-spacing:1px;">PRECIO FIJO · SIN SORPRESAS</p>
+      <div class="price-amount">$150<span>.000</span></div>
+      <p class="price-note">Un solo pago. Solo si te gusta el resultado.</p>
+      <a href="https://wa.me/5491168569520?text=Hola!%20Quiero%20empezar%20mi%20landing%20con%20Tripplor%20%F0%9F%9A%80" target="_blank" class="btn-primary" style="font-size:16px;padding:16px 36px;">Empezar ahora →</a>
+    </div>
+    <div class="price-right">
+      <p class="price-right-title">¿Qué estás comprando?</p>
+      <div class="price-items">
+        <div class="price-item">Landing page completa y publicada</div>
+        <div class="price-item">Copy y diseño personalizado</div>
+        <div class="price-item">Responsiva en todos los dispositivos</div>
+        <div class="price-item">Entrega en 24 horas</div>
+        <div class="price-item">Una ronda de revisiones</div>
+        <div class="price-item">Botón de WhatsApp integrado</div>
+      </div>
+      <div class="guarantee">
+        <strong>Garantía de satisfacción:</strong> Si no te gusta el resultado, no pagás. Así de simple. Creemos que el trabajo habla por sí solo.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section faq-section" id="faq">
+  <div class="faq-grid">
+    <div>
+      <div class="s-label">FAQ</div>
+      <h2 class="s-title">PREGUNTAS<br><span class="i">frecuentes.</span></h2>
+      <p class="s-sub">Si no encontrás lo que buscás, escribinos directo.</p>
+      <a href="https://wa.me/5491168569520?text=Hola!%20Tengo%20una%20pregunta%20sobre%20Tripplor" target="_blank" class="btn-ghost">Escribirnos →</a>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">¿Qué necesito para empezar? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Solo completar un formulario de brief con info básica de tu negocio. Qué vendés, a quién, y alguna referencia de estilo. 10 minutos y arrancamos.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿En serio entrega en 24 horas? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Sí. Una vez que aprobás el brief, en 24 horas hábiles tenés la primera versión lista para revisar. Usamos IA para acelerar el proceso sin perder calidad.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Qué pasa si no me gusta el diseño? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">No pagás. Así funciona Tripplor. Si el resultado no te convence, no hay ningún cargo. Aunque la gran mayoría de los clientes aprueban en la primera vuelta.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Puedo pedir cambios? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Sí. Incluimos una ronda de revisiones donde podés pedir cambios de textos, colores, orden de secciones y CTAs. Cambios adicionales se cotizan aparte.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿La web landing queda publicada o me mandan el código? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Te entregamos el archivo HTML listo para publicar. Si querés, lo publicamos nosotros. Si ya tenés hosting, te lo mandamos y lo subís vos en dos clicks.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">¿Funciona en celular? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Sí, todas las landings son 100% responsivas. Se adaptan automáticamente a cualquier pantalla: celular, tablet o computadora.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-section">
+  <h2>¿ARRANCAMOS<br>CON TU<br><span class="i">web landing?</span></h2>
+  <div class="final-actions">
+    <a href="https://wa.me/5491168569520?text=Hola!%20Quiero%20arrancar%20con%20mi%20landing%20en%20Tripplor%20%F0%9F%9A%80" target="_blank" class="wa-btn">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Escribinos por WhatsApp
+    </a>
+    <p class="final-note">Respondemos en el día · Sin compromiso</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TRIPPL<span>OR</span></div>
+  <span>Agencia de diseño web con IA · Argentina 🇦🇷</span>
+  <span>wa.me/5491168569520</span>
+</footer>
+
+<!-- WA FLOAT -->
+<a href="https://wa.me/5491168569520?text=Hola!%20Vi%20la%20web%20de%20Tripplor%20y%20quiero%20consultar%20%F0%9F%9A%80" target="_blank" class="wa-float" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script>
+  // ── CONTENIDO BILINGÜE ──────────────────────────────────────────────
+  const WA_AR = '5491168569520';
+  const WA_BR = '558294105151';
+
+  const content = {
+    es: {
+      wa: WA_AR,
+      lang: 'es',
+      flag: '🇦🇷',
+      title: 'Tripplor — Web landings diseñadas con IA',
+      navCta: 'Quiero mi web landing',
+      badge: 'Entrega en 24 horas',
+      heroLabel: 'Agencia de diseño web · IA · Argentina',
+      h1: 'TU WEB LANDING<br><span class="italic">lista</span><br>MAÑANA.',
+      heroSub: 'Diseñamos tu web landing profesional con inteligencia artificial. Rápido, impactante y listo para convertir visitas en clientes.',
+      heroGuarantee: 'Si no te gusta el resultado, no pagás. Así de simple.',
+      heroCta: 'Empezar ahora →',
+      stat1: '24<span>hs</span>', stat1l: 'Tiempo de entrega desde que aprobás el brief',
+      stat2: '$<span>150K</span>', stat2l: 'Precio fijo. Sin sorpresas, sin extras ocultos',
+      stat3: '0<span>%</span>', stat3l: 'Adelanto. Pagás solo cuando te gusta el resultado',
+      marquee: ['DISEÑO CON IA','ENTREGA EN 24HS','PRECIO FIJO','100% RESPONSIVA','PAGÁS AL APROBAR'],
+      stepsLabel: 'El proceso',
+      stepsTitle: 'CUATRO PASOS.<br><span class="i">una web landing.</span>',
+      stepsSub: 'Sin reuniones interminables ni esperas de semanas. Así trabajamos en Tripplor:',
+      steps: [
+        { num:'01', title:'Completás el brief', desc:'Un formulario de 10 minutos con lo esencial: qué vendés, a quién, y cómo te imaginás el diseño.', tag:'10 minutos' },
+        { num:'02', title:'Generamos el diseño', desc:'Combinamos diseño profesional con IA para crear tu web landing. Copy incluido, sin que tengas que escribir nada.', tag:'Mismo día' },
+        { num:'03', title:'La revisás', desc:'Te mostramos el resultado. Si querés cambios, los hacemos. Tenés una ronda de revisión incluida.', tag:'Tus ajustes' },
+        { num:'04', title:'Aprobás y pagás', desc:'Si te gusta, pagás. Si no, no. Simple. Publicamos la web landing y en 24hs ya está online.', tag:'Sin riesgo' },
+      ],
+      includesLabel: 'Qué incluye',
+      includesTitle: 'TODO LO<br><span class="i">necesario.</span>',
+      includesSub: 'Un solo precio. Nada de cobros extra por el copy, el diseño o la publicación.',
+      includesCta: 'Quiero la mía →',
+      includes: ['Copy completo redactado por IA','Diseño 100% personalizado','Responsiva — celular, tablet y desktop','Botón de WhatsApp con tu número','Una ronda de revisiones','Publicación online lista para usar','Entrega en 24 horas'],
+      includesTags: ['incluido','incluido','incluido','incluido','incluido','incluido','garantizado'],
+      priceLabel: 'Inversión',
+      priceTag: 'PRECIO FIJO · SIN SORPRESAS',
+      price: '$150<span>.000</span>',
+      priceNote: 'Un solo pago. Solo si te gusta el resultado.',
+      priceCta: 'Empezar ahora →',
+      priceBoxTitle: '¿Qué estás comprando?',
+      priceItems: ['Web landing completa y publicada','Copy y diseño personalizado','Responsiva en todos los dispositivos','Entrega en 24 horas','Una ronda de revisiones','Botón de WhatsApp integrado'],
+      guarantee: '<strong>Garantía de satisfacción:</strong> Si no te gusta el resultado, no pagás. Así de simple. Creemos que el trabajo habla por sí solo.',
+      faqLabel: 'FAQ',
+      faqTitle: 'PREGUNTAS<br><span class="i">frecuentes.</span>',
+      faqSub: 'Si no encontrás lo que buscás, escribinos directo.',
+      faqCta: 'Escribirnos →',
+      faqs: [
+        { q:'¿Qué necesito para empezar?', a:'Solo completar un formulario de brief con info básica de tu negocio. Qué vendés, a quién, y alguna referencia de estilo. 10 minutos y arrancamos.' },
+        { q:'¿En serio entrega en 24 horas?', a:'Sí. Una vez que aprobás el brief, en 24 horas hábiles tenés la primera versión lista para revisar. Usamos IA para acelerar el proceso sin perder calidad.' },
+        { q:'¿Qué pasa si no me gusta el diseño?', a:'No pagás. Así funciona Tripplor. Si el resultado no te convence, no hay ningún cargo. Aunque la gran mayoría de los clientes aprueban en la primera vuelta.' },
+        { q:'¿Puedo pedir cambios?', a:'Sí. Incluimos una ronda de revisiones donde podés pedir cambios de textos, colores, orden de secciones y CTAs. Cambios adicionales se cotizan aparte.' },
+        { q:'¿La web landing queda publicada o me mandan el código?', a:'Te entregamos el archivo HTML listo para publicar. Si querés, lo publicamos nosotros. Si ya tenés hosting, te lo mandamos y lo subís vos en dos clicks.' },
+        { q:'¿Funciona en celular?', a:'Sí, todas las web landings son 100% responsivas. Se adaptan automáticamente a cualquier pantalla: celular, tablet o computadora.' },
+      ],
+      finalTitle: '¿ARRANCAMOS<br>CON TU<br><span class="i">web landing?</span>',
+      finalCta: 'Escribinos por WhatsApp',
+      finalNote: 'Respondemos en el día · Sin compromiso',
+      footerSub: 'Agencia de diseño web con IA · Argentina 🇦🇷',
+      waMsg: 'Hola!%20Quiero%20mi%20web%20landing%20con%20Tripplor%20%F0%9F%9A%80',
+    },
+    pt: {
+      wa: WA_BR,
+      lang: 'pt',
+      flag: '🇧🇷',
+      title: 'Tripplor — Web landings criadas com IA',
+      navCta: 'Quero minha web landing',
+      badge: 'Entrega em 24 horas',
+      heroLabel: 'Agência de design web · IA · Brasil',
+      h1: 'SUA WEB LANDING<br><span class="italic">pronta</span><br>AMANHÃ.',
+      heroSub: 'Criamos sua web landing profissional com inteligência artificial. Rápido, impactante e pronto para converter visitas em clientes.',
+      heroGuarantee: 'Se não gostar do resultado, não paga. Simples assim.',
+      heroCta: 'Começar agora →',
+      stat1: '24<span>hs</span>', stat1l: 'Tempo de entrega após aprovar o brief',
+      stat2: 'R$<span>500</span>', stat2l: 'Preço fixo. Sem surpresas, sem cobranças ocultas',
+      stat3: '0<span>%</span>', stat3l: 'Adiantamento. Você paga só quando gostar do resultado',
+      marquee: ['DESIGN COM IA','ENTREGA EM 24HS','PREÇO FIXO','100% RESPONSIVA','PAGA AO APROVAR'],
+      stepsLabel: 'O processo',
+      stepsTitle: 'QUATRO PASSOS.<br><span class="i">uma web landing.</span>',
+      stepsSub: 'Sem reuniões intermináveis nem semanas de espera. É assim que trabalhamos na Tripplor:',
+      steps: [
+        { num:'01', title:'Você preenche o brief', desc:'Um formulário de 10 minutos com o essencial: o que você vende, para quem, e como imagina o design.', tag:'10 minutos' },
+        { num:'02', title:'Criamos o design', desc:'Combinamos design profissional com IA para criar sua web landing. Copy incluído, sem que você precise escrever nada.', tag:'Mesmo dia' },
+        { num:'03', title:'Você revisa', desc:'Mostramos o resultado. Se quiser mudanças, fazemos. Você tem uma rodada de revisão incluída.', tag:'Seus ajustes' },
+        { num:'04', title:'Você aprova e paga', desc:'Se gostar, paga. Se não, tudo bem. Publicamos a web landing e em 24hs já está no ar.', tag:'Sem risco' },
+      ],
+      includesLabel: 'O que inclui',
+      includesTitle: 'TUDO O QUE<br><span class="i">você precisa.</span>',
+      includesSub: 'Um só preço. Sem cobranças extras por copy, design ou publicação.',
+      includesCta: 'Quero a minha →',
+      includes: ['Copy completo criado por IA','Design 100% personalizado','Responsiva — celular, tablet e desktop','Botão de WhatsApp com seu número','Uma rodada de revisões','Publicação online pronta para usar','Entrega em 24 horas'],
+      includesTags: ['incluído','incluído','incluído','incluído','incluído','incluído','garantido'],
+      priceLabel: 'Investimento',
+      priceTag: 'PREÇO FIXO · SEM SURPRESAS',
+      price: 'R$<span>500</span>',
+      priceNote: 'Pagamento único. Só se gostar do resultado.',
+      priceCta: 'Começar agora →',
+      priceBoxTitle: 'O que você está comprando?',
+      priceItems: ['Web landing completa e publicada','Copy e design personalizado','Responsiva em todos os dispositivos','Entrega em 24 horas','Uma rodada de revisões','Botão de WhatsApp integrado'],
+      guarantee: '<strong>Garantia de satisfação:</strong> Se não gostar do resultado, não paga. Simples assim. Acreditamos que o trabalho fala por si mesmo.',
+      faqLabel: 'FAQ',
+      faqTitle: 'PERGUNTAS<br><span class="i">frequentes.</span>',
+      faqSub: 'Se não encontrar o que procura, fale com a gente.',
+      faqCta: 'Falar conosco →',
+      faqs: [
+        { q:'O que preciso para começar?', a:'Só preencher um formulário de brief com informações básicas do seu negócio. O que você vende, para quem, e alguma referência de estilo. 10 minutos e começamos.' },
+        { q:'Realmente entrega em 24 horas?', a:'Sim. Após aprovar o brief, em 24 horas úteis você tem a primeira versão pronta para revisar. Usamos IA para acelerar o processo sem perder qualidade.' },
+        { q:'E se eu não gostar do design?', a:'Não paga. É assim que a Tripplor funciona. Se o resultado não te convencer, não há nenhuma cobrança. Embora a grande maioria dos clientes aprove na primeira rodada.' },
+        { q:'Posso pedir alterações?', a:'Sim. Incluímos uma rodada de revisões onde você pode pedir mudanças de textos, cores, ordem das seções e CTAs. Alterações adicionais são orçadas à parte.' },
+        { q:'A web landing fica publicada ou me mandam o código?', a:'Entregamos o arquivo HTML pronto para publicar. Se quiser, publicamos nós mesmos. Se já tiver hospedagem, mandamos e você sobe em dois cliques.' },
+        { q:'Funciona no celular?', a:'Sim, todas as web landings são 100% responsivas. Se adaptam automaticamente a qualquer tela: celular, tablet ou computador.' },
+      ],
+      finalTitle: 'VAMOS COMEÇAR<br>COM A SUA<br><span class="i">web landing?</span>',
+      finalCta: 'Falar pelo WhatsApp',
+      finalNote: 'Respondemos no mesmo dia · Sem compromisso',
+      footerSub: 'Agência de design web com IA · Brasil 🇧🇷',
+      waMsg: 'Ola!%20Quero%20minha%20web%20landing%20com%20Tripplor%20%F0%9F%9A%80',
+    }
+  };
+
+  const WA_SVG = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+
+  function waLink(wa, msg) { return `https://wa.me/${wa}?text=${msg}`; }
+
+  function applyLang(c) {
+    const wa = c.wa, msg = c.waMsg;
+    document.documentElement.lang = c.lang;
+    document.title = c.title;
+
+    // Nav
+    document.querySelector('.nav-cta').textContent = c.navCta;
+    document.querySelector('.nav-cta').href = waLink(wa, msg);
+
+    // Hero
+    document.querySelector('.hero-badge').dataset.text = c.badge;
+    document.querySelector('.hero-badge').childNodes[document.querySelector('.hero-badge').childNodes.length-1].textContent = ' ' + c.badge;
+    document.querySelector('.hero-label').textContent = c.heroLabel;
+    document.querySelector('.hero h1').innerHTML = c.h1;
+    document.querySelector('.hero-sub').textContent = c.heroSub;
+    document.querySelector('.hero-guarantee').textContent = c.heroGuarantee;
+    document.querySelector('.hero .btn-primary').textContent = c.heroCta;
+    document.querySelector('.hero .btn-primary').href = waLink(wa, msg);
+
+    // Stats
+    const stats = document.querySelectorAll('.stat');
+    stats[0].querySelector('.stat-num').innerHTML = c.stat1;
+    stats[0].querySelector('.stat-label').textContent = c.stat1l;
+    stats[1].querySelector('.stat-num').innerHTML = c.stat2;
+    stats[1].querySelector('.stat-label').textContent = c.stat2l;
+    stats[2].querySelector('.stat-num').innerHTML = c.stat3;
+    stats[2].querySelector('.stat-label').textContent = c.stat3l;
+
+    // Marquee
+    const mq = document.querySelector('.marquee');
+    mq.innerHTML = [...c.marquee, ...c.marquee, ...c.marquee].map((t,i) => i % 2 === 0 ? `<span>${t}</span>` : `<span class="dot">◆</span><span>${t}</span>`).join('') + `<span class="dot">◆</span>`;
+
+    // Steps
+    document.querySelector('#como-funciona .s-label').textContent = c.stepsLabel;
+    document.querySelector('#como-funciona .s-title').innerHTML = c.stepsTitle;
+    document.querySelector('#como-funciona .s-sub').textContent = c.stepsSub;
+    document.querySelectorAll('.step').forEach((el, i) => {
+      el.querySelector('.step-num').textContent = c.steps[i].num;
+      el.querySelector('h3').textContent = c.steps[i].title;
+      el.querySelector('p').textContent = c.steps[i].desc;
+      el.querySelector('.step-tag').textContent = c.steps[i].tag;
+    });
+
+    // Includes
+    document.querySelector('.includes-section .s-label').textContent = c.includesLabel;
+    document.querySelector('.includes-section .s-title').innerHTML = c.includesTitle;
+    document.querySelector('.includes-section .s-sub').textContent = c.includesSub;
+    document.querySelector('.includes-section .btn-primary').textContent = c.includesCta;
+    document.querySelector('.includes-section .btn-primary').href = waLink(wa, msg);
+    document.querySelectorAll('.include-row').forEach((el, i) => {
+      el.querySelectorAll('span')[1].textContent = c.includes[i];
+      el.querySelector('.tag').textContent = c.includesTags[i];
+    });
+
+    // Price
+    document.querySelector('.price-section .s-label').textContent = c.priceLabel;
+    document.querySelector('.price-section [style*="letter-spacing"]').textContent = c.priceTag;
+    document.querySelector('.price-amount').innerHTML = c.price;
+    document.querySelector('.price-note').textContent = c.priceNote;
+    document.querySelector('.price-section .btn-primary').textContent = c.priceCta;
+    document.querySelector('.price-section .btn-primary').href = waLink(wa, msg);
+    document.querySelector('.price-right-title').textContent = c.priceBoxTitle;
+    document.querySelectorAll('.price-item').forEach((el, i) => el.textContent = c.priceItems[i]);
+    document.querySelector('.guarantee').innerHTML = c.guarantee;
+
+    // FAQ
+    document.querySelector('.faq-section .s-label').textContent = c.faqLabel;
+    document.querySelector('.faq-section .s-title').innerHTML = c.faqTitle;
+    document.querySelector('.faq-section .s-sub').textContent = c.faqSub;
+    document.querySelector('.faq-section .btn-ghost').textContent = c.faqCta;
+    document.querySelector('.faq-section .btn-ghost').href = waLink(wa, msg);
+    document.querySelectorAll('.faq-item').forEach((el, i) => {
+      el.querySelector('.faq-q').childNodes[0].textContent = c.faqs[i].q + ' ';
+      el.querySelector('.faq-a').textContent = c.faqs[i].a;
+    });
+
+    // Final CTA
+    document.querySelector('.final-section h2').innerHTML = c.finalTitle;
+    document.querySelector('.wa-btn').innerHTML = WA_SVG + c.finalCta;
+    document.querySelector('.wa-btn').href = waLink(wa, msg);
+    document.querySelector('.final-note').textContent = c.finalNote;
+
+    // Footer
+    document.querySelector('footer span:first-of-type').textContent = c.footerSub;
+    document.querySelector('footer span:last-of-type').textContent = `wa.me/${wa}`;
+
+    // WA float
+    document.querySelector('.wa-float').href = waLink(wa, msg);
+
+    // Language switcher flag
+    document.querySelector('#lang-switcher').textContent = c.lang === 'es' ? '🇧🇷 PT' : '🇦🇷 ES';
+    document.querySelector('#lang-switcher').dataset.current = c.lang;
+  }
+
+  // ── GEO DETECTION ───────────────────────────────────────────────────
+  async function detectLang() {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      return data.country_code === 'BR' ? 'pt' : 'es';
+    } catch(e) {
+      return 'es'; // fallback
+    }
+  }
+
+  // ── INIT ────────────────────────────────────────────────────────────
+  (async () => {
+    const lang = await detectLang();
+    applyLang(content[lang]);
+  })();
+
+  // Language switcher toggle
+  document.querySelector('#lang-switcher').addEventListener('click', function() {
+    const current = this.dataset.current;
+    const next = current === 'es' ? 'pt' : 'es';
+    applyLang(content[next]);
+  });
+
+  // ── CURSOR ──────────────────────────────────────────────────────────
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx + 'px'; cursor.style.top = my + 'px'; });
+  function animRing() { rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; requestAnimationFrame(animRing); }
+  animRing();
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.style.width = '6px'; cursor.style.height = '6px'; ring.style.width = '52px'; ring.style.height = '52px'; });
+    el.addEventListener('mouseleave', () => { cursor.style.width = '10px'; cursor.style.height = '10px'; ring.style.width = '36px'; ring.style.height = '36px'; });
+  });
+
+  // ── FAQ ─────────────────────────────────────────────────────────────
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const open = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!open) item.classList.add('open');
+    });
+  });
+
+  // ── SCROLL REVEAL ───────────────────────────────────────────────────
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.step, .include-row, .stat').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    obs.observe(el);
+  });
+</script>
+</body>
+</html>
